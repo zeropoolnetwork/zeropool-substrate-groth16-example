@@ -1,7 +1,6 @@
 // Zeropool Substrate Pallet
 // example: {"vk":"yO5EICtE+JVjTbRYkayI0Y/BoOJtE9lsrqeCTKTDnxD8UjB8B51wrVsQsVrsi6Uk0b2UKGfs3AJUX2Eud5wnET/ze/CsefR74bOn50BmVoExPPDiJGRD2IejItInd/wbtAH7GstyB1Q1j9uROBBAgE2eEj/cwRcHJobe4MP1mQIsiHdC5KXrBZFMlcRQi19O5pRHJ3fra+CNrckf5PHVL1NDT3E4ah/xGoRIbB0DfMSC2AO5NCyuZzJiAMBEKEcLbiazu9JOT65EXSc7HGM9IKlQXgpITR/jikWNxJc/Jyn6KiimTBN/yj4NVjAogElMdLmVoelMa0SAen8Z5ZwkFc6j3IriiWbKQnnkocqd++FqYs4gTh2rFDvcn2YpAhAmnMf35ssgfTFSIOyLZeRQPJ/SzCQMvSq8p1TAkgF85xv+1Vwd0UmrwJXyPVWhevfis0jEd6Cw78ESIMwB7S4dJwNAnVjEBRrKGfOAAzBIiTQRVMSMY2a1nMP/vr57eJwrOYvVboNDUHw8N+u1KoT3vTQkt6+bdeUBw2X/HBbeuyLcmx9AdsbJ0QY1GGF4cgGnSx9kGtcL9UY4qMWVtJ++LAQAAABZB9VFKNzCZgjPMZ9MTfotIL1czmkU9p4L3+6udM/DCAIGsaMeBAN/AhWI+GDLJK3EPzfiVDtw9PWWv+mifJUEQqRUa63wkfB2CouGxTpfsMPlZW93gzGXl5C4lmqMSQnAYpBIHANPM/R/DtA6eMTKKgKBfqgSMjf8YwlmfckmEkbsEZYwsUj2B+ryafp/qj39z80B/33p62Wz+OdwpcIYLSyprNYGC1nyO/jlRIhqRFhx9qkBRjKz/ddvFv7bdAeyPpjCqbT/6zrE22RSdm1I+tceC6xm3OUJE3wX4d5XF5z1EXo17iShXLdYhwVcd//YzyysetRirUxRPeXNAuAh","proof":"Qexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}
 #![cfg_attr(not(feature = "std"), no_std)]
-
 use sp_std::prelude::*;
 use sp_runtime::{
 	traits::{StaticLookup, Zero}
@@ -18,10 +17,11 @@ use ff_uint::{
     construct_primefield_params, construct_uint, overflowing, Field, LegendreSymbol, SqrtField,
     Uint,
 };
+use sp_std::vec;
 construct_uint! {
 	pub struct U256(4);
 }
-pub type G1 = [U256;2];
+/*pub type G1 = [U256;2];
 pub type G2 = [U256;4];
 pub type VU256 = sp_std::prelude::Vec<U256>;
 
@@ -38,7 +38,7 @@ pub struct Proof {
     a:G1,
     b:G2,
     c:G1
-}
+}*/
 
 #[serde(crate = "alt_serde")]
 #[derive(Deserialize, Default)]
@@ -143,14 +143,15 @@ decl_module! {
 				Ok(rs) => vkproofinput=rs,
 				Err(e) => Err(Error::<T>::NoneValue)?,
 			};
+			let v: Vec<i32> = vec![];
 			//deserialize from borsh
 			let vkstorage=vkproofinput.vk.clone();
-			let vk = base64::decode(vkproofinput.vk).unwrap();
+			/*let vk = base64::decode(vkproofinput.vk).unwrap();
 			let vkd=VK::try_from_slice(&vk).unwrap();
 			let proof = base64::decode(vkproofinput.proof).unwrap();
 		    let proofd=Proof::try_from_slice(&proof).unwrap();
     		let input = base64::decode(vkproofinput.input).unwrap();
-			let inputd=VU256::try_from_slice(&input).unwrap();
+			let inputd=VU256::try_from_slice(&input).unwrap();*/
 			// make verification
 			//let neg_a = alt_bn128_g1_neg(proofd.a);
 

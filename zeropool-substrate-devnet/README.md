@@ -22,7 +22,7 @@ without launching it:
 make build
 ```
 
-### Embedded Docs
+### Help
 
 Once the project has been built, the following command can be used to explore all parameters and
 subcommands:
