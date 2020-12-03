@@ -36,10 +36,11 @@ borsh = { git = "https://github.com/zeropoolnetwork/borsh.git", rev = "62e6da830
 ## attention: the following version does not work
 ##borsh = { git = "https://github.com/zeropoolnetwork/borsh.git", optional = true, default-features = false,branch = "feature/no-std" }
 
-#[dependencies.bn]
-#package = "zeropool-bn"
-#version = "0.5.7"
-#features = []
+[dependencies.bn]
+package = "zeropool-bn"
+version = "0.5.7"
+default-features = false
+features = []
 
 [dev-dependencies]
 sp-core = { default-features = false, version = '2.0.0' }
