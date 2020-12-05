@@ -4,11 +4,8 @@
 extern crate alloc;
 use alloc::vec;
 use sp_std::prelude::*;
-//use sp_runtime::{
-//	traits::{StaticLookup, Zero}
-//};
 use frame_support::{
-	decl_module, decl_event, decl_storage, ensure, decl_error,
+	decl_module, decl_event, decl_storage, ensure, decl_error,dispatch,
 	traits::{Currency, EnsureOrigin, ReservableCurrency, OnUnbalanced, Get},
 };
 use frame_system::ensure_signed;
@@ -27,7 +24,7 @@ pub type G1 = [U256;2];
 pub type G2 = [U256;4];
 pub type VU256 = sp_std::prelude::Vec<U256>;
 
-#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, Default)]
 pub struct VK {
     alpha:G1,
     beta:G2,
@@ -35,7 +32,8 @@ pub struct VK {
     delta:G2,
     ic: Vec<G1>
 }
-#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, Default)]
 pub struct Proof {
     a:G1,
     b:G2,
@@ -81,7 +79,7 @@ pub trait Trait: frame_system::Trait {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as Zeropool {
-		/// The lookup table for names.
+		/// The lookup table for verificationkey.
 		VerificationKey: map hasher(twox_64_concat) T::AccountId => Option<(Vec<u8>, BalanceOf<T>)>;
 	}
 }
@@ -99,8 +97,9 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
 		TooShort,
 		TooLong,
-		Unnamed,
+		VerificationFailed,
 		NoneValue,
+		DecodingError,
 		StorageOverflow,
 	}
 }
@@ -131,7 +130,7 @@ decl_module! {
 		/// //		pub fn groth16verify(origin, jvkproofinput: Vec<u8>) -> dispatch::DispatchResult {
 
 		#[weight = 50_000_000]
-		fn groth16verify(origin, jvkproofinput: Vec<u8>) {
+		fn groth16verify(origin, jvkproofinput: Vec<u8>) -> dispatch::DispatchResult {
 			let sender = ensure_signed(origin)?; //check is signed
 			ensure!(jvkproofinput.len() >= T::MinLength::get(), Error::<T>::TooShort); //check minimum length
 			ensure!(jvkproofinput.len() <= T::MaxLength::get(), Error::<T>::TooLong);  // check maximum length
@@ -144,12 +143,12 @@ decl_module! {
 			};
 			//deserialize from borsh
 			let vkstorage=vkproofinput.vk.clone();
-			let vk = base64::decode(vkproofinput.vk).unwrap();
-			let vkd=VK::try_from_slice(&vk).unwrap();
-			let proof = base64::decode(vkproofinput.proof).unwrap();
-		    let proofd=Proof::try_from_slice(&proof).unwrap();
-    		let input = base64::decode(vkproofinput.input).unwrap();
-			let inputd=VU256::try_from_slice(&input).unwrap();
+			let vk = base64::decode(vkproofinput.vk).unwrap_or(vec!{});
+			let vkd=VK::try_from_slice(&vk).unwrap_or(VK::default());
+			let proof = base64::decode(vkproofinput.proof).unwrap_or(vec!{});
+		    let proofd=Proof::try_from_slice(&proof).unwrap_or(Proof::default());
+    		let input = base64::decode(vkproofinput.input).unwrap_or(vec!{});
+			let inputd=VU256::try_from_slice(&input).unwrap_or(VU256::default());
 			// make verification
 			let neg_a = alt_bn128_g1_neg(proofd.a);
 			let acc_expr = vkd.ic.iter().zip([U256::ONE].iter().chain(inputd.iter())).map(|(&base, &exp)| (base, exp)).collect::<Vec<_>>();
@@ -164,41 +163,48 @@ decl_module! {
 			// store verification key
 			if verification{
 				let deposit = if let Some((_, deposit)) = <VerificationKey<T>>::get(&sender) {
-					Self::deposit_event(RawEvent::VerificationKeySet(sender.clone()));
-					deposit
-				} else {
-					let deposit = T::ReservationFee::get();
-					T::Currency::reserve(&sender, deposit.clone())?;
-					Self::deposit_event(RawEvent::VerificationKeySet(sender.clone()));
-					deposit
+								Self::deposit_event(RawEvent::VerificationKeySet(sender.clone()));
+								deposit
+							} else {
+								let deposit = T::ReservationFee::get();
+								T::Currency::reserve(&sender, deposit.clone())?;
+								Self::deposit_event(RawEvent::VerificationKeySet(sender.clone()));
+								deposit
 				};
 				<VerificationKey<T>>::insert(&sender, (vkstorage, deposit));
+				// Return a successful DispatchResult
+				Ok(())
+			}
+			else{
+				// Return a failed verification DispatchResult
+				Err(Error::<T>::VerificationFailed)?
 			}
 		}
 	}
 }
-// function to deserialize json
+// function to deserialize json field
 pub fn de_string_to_bytes<'de, D>(de: D) -> Result<sp_std::prelude::Vec<u8>, D::Error> where D: Deserializer<'de> {
     let s: &str = Deserialize::deserialize(de)?;
     Ok(s.as_bytes().to_vec())
 }
-// groth16 verification functions
+
+// groth16 verification functions (further calls to functions in  alt_b128.rs)
 pub fn alt_bn128_g1_neg(p:G1) -> G1 {
     alt_bn128_g1_sum(&[(true, p)])
 }
 pub fn alt_bn128_g1_sum(v:&[(bool, G1)]) -> G1{
-    let data = v.try_to_vec().unwrap();
-    let res = crate::alt_bn128::alt_bn128_g1_sum(&data).unwrap();
+    let data = v.try_to_vec().unwrap_or(vec!{});
+    let res = crate::alt_bn128::alt_bn128_g1_sum(&data).unwrap_or(vec!{});
     let mut res_ptr = &res[..];
-	<G1 as BorshDeserialize>::deserialize(&mut res_ptr).unwrap()
+	<G1 as BorshDeserialize>::deserialize(&mut res_ptr).unwrap_or(G1::default())
 }
 pub fn alt_bn128_g1_multiexp(v:&[(G1, U256)]) -> G1{
-    let data = v.try_to_vec().unwrap();
-    let res = crate::alt_bn128::alt_bn128_g1_multiexp(&data).unwrap();
+    let data = v.try_to_vec().unwrap_or(vec!{});
+    let res = crate::alt_bn128::alt_bn128_g1_multiexp(&data).unwrap_or(vec!{});
     let mut res_ptr = &res[..];
-    <G1 as BorshDeserialize>::deserialize(&mut res_ptr).unwrap()
+    <G1 as BorshDeserialize>::deserialize(&mut res_ptr).unwrap_or(G1::default())
 }
 pub fn alt_bn128_pairing_check(v:&[(G1,G2)]) -> bool {
-	let data = v.try_to_vec().unwrap();
-    crate::alt_bn128::alt_bn128_pairing_check(&data).unwrap()
+	let data = v.try_to_vec().unwrap_or(vec!{});
+    crate::alt_bn128::alt_bn128_pairing_check(&data).unwrap_or(false)
 }
