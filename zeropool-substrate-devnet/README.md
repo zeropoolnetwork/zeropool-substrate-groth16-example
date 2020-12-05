@@ -61,7 +61,7 @@ Start the development chain with detailed logging:
 ```bash
 RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/zeropool-substrate-devnet -lruntime=debug --dev
 ```
-### Unit Test for zeropool-substrate palle
+### Unit Testing for zeropool-substrate pallet
 Execute:
 ```bash
 cd zeropool-substrate-devnet/pallets/zeropool-substrate
