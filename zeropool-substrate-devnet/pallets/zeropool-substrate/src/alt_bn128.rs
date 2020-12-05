@@ -3,7 +3,7 @@ use bn::arith::U256;
 use bn::{pairing_batch, AffineG1, AffineG2, Fq, Fq2, Fr, Group, GroupError, Gt, G1, G2};
 use borsh::{BorshDeserialize, BorshSerialize};
 use alloc::format;
-use borsh::maybestd::io::{ErrorKind, Result, Write, Error};
+//use borsh::maybestd::io::{ErrorKind, Result, Write, Error};
 use borsh::maybestd::string::String;
 use borsh::maybestd::vec::Vec;
 
