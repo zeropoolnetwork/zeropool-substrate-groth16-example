@@ -43,10 +43,8 @@ default-features = false
 features = []
 
 [dev-dependencies]
-sp-core = { default-features = false, version = '2.0.0' }
-sp-io = { default-features = false, version = '2.0.0' }
-sp-runtime = { default-features = false, version = '2.0.0' }
-pallet-balances = { version = "2.0.0"}
+pretty_assertions = "0.4.0"
+
 
 [features]
 default = ["std"]

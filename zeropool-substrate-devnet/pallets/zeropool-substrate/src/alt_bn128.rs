@@ -3,7 +3,6 @@ use bn::arith::U256;
 use bn::{pairing_batch, AffineG1, AffineG2, Fq, Fq2, Fr, Group, GroupError, Gt, G1, G2};
 use borsh::{BorshDeserialize, BorshSerialize};
 use alloc::format;
-//use borsh::maybestd::io::{ErrorKind, Result, Write, Error};
 use borsh::maybestd::string::String;
 use borsh::maybestd::vec::Vec;
 
@@ -249,7 +248,7 @@ impl BorshDeserialize for WrapG2 {
 ///
 /// # Example
 /// ```
-/// # use zeropool_substrate_pallet::alt_bn128::alt_bn128_g1_multiexp;
+/// # use zeropool_substrate::alt_bn128::alt_bn128_g1_multiexp;
 /// # use base64;
 ///
 /// let multiexp_data = "AgAAAOzTRBYFMdAMNTUnUW2wNUYLmsNMgKQUC12+o1wVU7QSxF/il/WRT3I1bJqPaWKBbGqehkYu0QS7ct2nz52CRCn3EXSIf0p4ORYJ7mRmZLWtUyGrqlKl/4DNx2kHDEUrET+SS7pJZ4ql4b8tnwGv8W020cyHrmLCU15/Hp+LLCsD2H5fx6TkvPtG6iZSiHT1Ih1TDyGsHTrOzFWN3hx0FwAaB2tgYeH+WuEKReDHNFmxyi8v597Ji5NP4PU8bZXkGQ==";
@@ -269,17 +268,6 @@ pub fn alt_bn128_g1_multiexp(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn
     let result = WrapG1(G1::multiexp(&items)).try_to_vec().map_err(|e| AltBn128Error::AltBn128SerializationError { msg: format!("{}", e) })?;
     Ok(result)
 }
-/*pub fn alt_bn128_g1_multiexp(data: &[u8]) -> Result<Vec<u8>> {
-    let items = <Vec<(WrapG1, WrapFr)>>::try_from_slice(data)
-        //.map_err(|e| AltBn128Error::AltBn128DeserializationError { msg: format!("{}", e) })?
-        .into_iter()
-        .map(|e| (e.0 .0, e.1 .0))
-        .collect::<Vec<_>>();
-    let result = WrapG1(G1::multiexp(&items)).try_to_vec().unwrap();
-        //.map_err(|e| AltBn128Error::AltBn128SerializationError { msg: format!("{}", e) })?;
-    Ok(result)
-}*/
-
 /// Computes sum for signed g1 group elements on alt_bn128 curve
 /// \sum_i (-1)^{sign_i} g_{1 i} should be equal result.
 ///
@@ -301,7 +289,7 @@ pub fn alt_bn128_g1_multiexp(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn
 /// returns `AltBn128SerializationError`.///
 /// # Example
 /// ```
-/// # use zeropool_substrate_pallet::alt_bn128::alt_bn128_g1_sum;
+/// # use zeropool_substrate::alt_bn128::alt_bn128_g1_sum;
 /// # use base64;
 ///
 /// let sum_data = "AgAAAADs00QWBTHQDDU1J1FtsDVGC5rDTICkFAtdvqNcFVO0EsRf4pf1kU9yNWyaj2ligWxqnoZGLtEEu3Ldp8+dgkQpAT+SS7pJZ4ql4b8tnwGv8W020cyHrmLCU15/Hp+LLCsDb34dEXKnY0BG4EoWCfaLdEAFcmAKKBbqXEqkAlbaTDA=";
@@ -355,7 +343,7 @@ pub fn alt_bn128_g1_sum(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn128Er
 /// returns `AltBn128SerializationError`.///
 /// # Example
 /// ```
-/// # use zeropool_substrate_pallet::alt_bn128::alt_bn128_pairing_check;
+/// # use zeropool_substrate::alt_bn128::alt_bn128_pairing_check;
 /// # use base64;
 ///
 /// let pairs_data = "AgAAAHUK2WNxTupDt1oaOshWw3squNVY4PgSyGwGtQYcEWMHJIY1c8C0A3FM466TMq5PSpfDrArT0hpcdfZB7ahoEAQBGgPbBg3Bc03mGw3y1sMJ1WOHDKDKcoevKnSsT+oaKdRvwIF8cDlrJvTm3vAkQe6FvBMrlDvNKKGzreRYqecdEUOjM6W7ZSz6GERlXIDLvjNVCSs6iES0XG65qGuBLR67FmQRS13YfRfUC7rHzAGMhQtSLEHeFBowGoTcGdVdGU+wBJWX8wuD/el5Jt4PdnXI1q/pgrXBp/+ZqfDP6xwfU0pFswaWSENKpoJTUnN7b9DdQCvt1brrBzj7s1/pnxdtrVVnCKXr4tpPSHis+xRTecmMYqr2edoTcyqHPO8eIDGqq8zExaCeqC8Xbot73t71Yn3QRiduupL+Qrl2A04gL7PFXU/wzE7shdWtdV4/mkRZ7IoA9/LU9SH5ACP26QB8VsaiyTYTGsRL/kdG7jMCF7mYi4ZBa4Fy9C/78FDBFw==";
