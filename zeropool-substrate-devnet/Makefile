@@ -12,7 +12,8 @@ test:
 
 .PHONY: run
 run:
-	cargo +nightly-2020-10-05 run --release -- --dev --tmp
+	cargo +nightly-2020-10-05 build --release 
+	target/release/zeropool-substrate-node --dev --tmp
 
 .PHONY: build
 build:
