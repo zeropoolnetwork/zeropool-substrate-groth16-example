@@ -31,7 +31,6 @@ async function unit_testing(){
           console.log(`Test #5/3 - Transaction included at blockHash ${result.status.asInBlock}`);
         } else if (result.status.isFinalized) {
           console.log(`Test #5/4 - Transaction finalized at blockHash ${result.status.asFinalized}`);
-          unsub();
         }
     });
     console.log(`Test #5/5 - Verification Key hash ${txHash}`);
@@ -43,11 +42,11 @@ async function unit_testing(){
           console.log(`Test #6/3 - Transaction included at blockHash ${result.status.asInBlock}`);
         } else if (result.status.isFinalized) {
           console.log(`Test #6/4 - Transaction finalized at blockHash ${result.status.asFinalized}`);
-          unsub();
+          process.exit(1);
+
         }
     });
     console.log(`Test #6/5 - Verification hash ${txHashV}`);
-    //process.exit(1);
 }
 
 
