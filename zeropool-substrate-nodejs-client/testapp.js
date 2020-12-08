@@ -41,7 +41,7 @@ async function unit_testing(){
         }
         unsubv();
       }
-      console.log(`Test #5/2 Setting Verification Key - SUCCEDED - ${status}`);
+      console.log(`Test #5/2 Setting Verification Key - Status - ${status}`);
       if (status.isInBlock) {
           console.log(`Test #5/3 - Setting Verification Key - Transaction included at blockHash ${status.asInBlock}`);
       } else if (status.isFinalized) {
@@ -54,7 +54,7 @@ async function unit_testing(){
       }
     });
 }
-
+// function to make the groth16 verification on static example
 async function testGroth16Verify(alice) {
   const api = await ApiPromise.create({ provider: wsProvider });      // create API object
   // groth16 verification passing proof and input (verification key is stored)
@@ -75,14 +75,51 @@ async function testGroth16Verify(alice) {
         }
         unsubg();
         process.exit(1);
+      }else{
+        console.log(`Test #6/2 Groth16 Verification - Status - ${status}`);
       }
-      console.log(`Test #6/2 Groth16 Verification - SUCCEDED - ${status}`);
       if (status.isInBlock) {
         console.log(`Test #6/3 - Groth16 Verification - SUCCEDED - Transaction included at blockHash ${status.asInBlock}`);
       } else if (status.isFinalized) {
         console.log(`Test #6/4 - Groth16 Verification - SUCCEDED - Transaction finalized at blockHash ${status.asFinalized}`);
         events.forEach(({ phase, event: { data, method, section } }) => {
           console.log(`Test #6/5 - Groth16 Verification - SUCCEDED - Events: ${phase}: ${section}.${method}:: ${data}`);
+        });
+        unsubg();
+        testFailedGroth16Verify(alice);
+      }
+  });
+}
+// function to make the groth16 verification on static example
+async function testFailedGroth16Verify(alice) {
+  const api = await ApiPromise.create({ provider: wsProvider });      // create API object
+  // groth16 verification passing proof and input (verification key is stored)
+  let proofinput='{"proof":"Qexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
+  //to simulate an error use a wrong proof remove // in the following line
+  proofinput='{"proof":"AQexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
+  console.log("Test #7/1 - Groth16 Verify - SIMULATED ERROR");                
+  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(alice,({ status, events, dispatchError }) => {
+      if (dispatchError) {      // check for immediate verification success
+        if (dispatchError.isModule) {
+          // for module errors, we have the section indexed, lookup
+          const decoded = api.registry.findMetaError(dispatchError.asModule);
+          const { documentation, name, section } = decoded;
+          console.log(`Test #7/2 Groth16 Verification - FAILED - ${section}.${name}: ${documentation.join(' ')}`);
+        } else {
+          // Other, CannotLookup, BadOrigin, no extra info
+          console.log(`Test #7/2 Groth16 Verification - FAILED ${dispatchError.toString()}`);
+        }
+        unsubg();
+        process.exit(1);
+      }else{
+        console.log(`Test #7/2 Groth16 Verification - Status - ${status}`);
+      }
+      if (status.isInBlock) {
+        console.log(`Test #7/3 - Groth16 Verification - SUCCEDED - Transaction included at blockHash ${status.asInBlock}`);
+      } else if (status.isFinalized) {
+        console.log(`Test #7/4 - Groth16 Verification - SUCCEDED - Transaction finalized at blockHash ${status.asFinalized}`);
+        events.forEach(({ phase, event: { data, method, section } }) => {
+          console.log(`Test #7/5 - Groth16 Verification - SUCCEDED - Events: ${phase}: ${section}.${method}:: ${data}`);
         });
         unsubg();
         process.exit(1);
