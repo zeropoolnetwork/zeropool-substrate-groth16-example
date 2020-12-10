@@ -50,25 +50,49 @@ async function unit_testing(){
           });
           unsubv();
           let = proofinput='{"proof":"Qexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
-          let result=await testGroth16Verify(alice); // make groth16 verification
+          let result=await testGroth16Verify(alice,proofinput); // make groth16 verification
           if(result) 
               console.log("Test #5/6 - testGroth16Verify SUCCEDED");
           else
               console.log("Test #5/6 - testGroth16Verify FAILED");
         }
+  
+
     });
 }
-// function to make the groth16 verification on static example
-async function testGroth16Verify(alice) {
+// function to make the groth16 verification with a callback to return the result
+async function testGroth16VerifyCallBack(keyring,proofinput,callbackfunction) {
   const api = await ApiPromise.create({ provider: wsProvider });      // create API object
   // groth16 verification passing proof and input (verification key is stored)
-  let proofinput='{"proof":"Qexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
-  //to simulate an error use a wrong proof remove // in the following line
-  //proofinput='{"proof":"AQexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
+  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(keyring,({ dispatchError,dispatchInfo,status, events }) => {
+      if (dispatchError) {      // check for immediate verification success
+        let msgerror="";
+        dispatchErrorG=dispatchError;
+        if (dispatchError.isModule) {
+          // for module errors, we have the section indexed, lookup
+          const decoded = api.registry.findMetaError(dispatchError.asModule);
+          const { documentation, name, section } = decoded;
+          msgerror=`KO - Groth16 Verification - FAILED - ${section}.${name}: ${documentation.join(' ')}`;
+        } else {
+          msgerror=`KO - Groth16 Verification - FAILED - ${dispatchError.toString()}`;
+        }
+        unsubg();
+        callbackfunction(false,msgerror);
+      }
+      if (status.isInBlock) {
+        unsubg();
+        callbackfunction(true,"OK - Groth16 Verification Successful");
+      }
+  });
+}
+// function to make the groth16 verification on static example
+async function testGroth16Verify(keyring,proofinput) {
+  const api = await ApiPromise.create({ provider: wsProvider });      // create API object
+  // groth16 verification passing proof and input (verification key is stored)
   console.log("Test #6/1 - Groth16 Verify");  
   let dispatchErrorG=""; // Global vars
   let dispatchInfoG="";         
-  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(alice,({ dispatchError,dispatchInfo,status, events }) => {
+  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(keyring,({ dispatchError,dispatchInfo,status, events }) => {
       if (dispatchError) {      // check for immediate verification success
         dispatchErrorG=dispatchError;
         if (dispatchError.isModule) {
@@ -94,7 +118,8 @@ async function testGroth16Verify(alice) {
           console.log(`Test #6/5 - Groth16 Verification - SUCCEDED - Events: ${phase}: ${section}.${method}:: ${data}`);
         });
         unsubg();
-        testFailedGroth16Verify(alice);
+        testFailedGroth16Verify(keyring);
+        //testGroth16VerifyCallBack(keyring,proofinput,receiveresult);
       }
   });
   // waiting for result
@@ -131,14 +156,14 @@ async function testGroth16Verify(alice) {
 }
 
 // function to make the groth16 verification on static example
-async function testFailedGroth16Verify(alice) {
+async function testFailedGroth16Verify(keyring) {
   const api = await ApiPromise.create({ provider: wsProvider });      // create API object
   // groth16 verification passing proof and input (verification key is stored)
   let proofinput='{"proof":"Qexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
   //to simulate an error use a wrong proof remove // in the following line
   proofinput='{"proof":"AQexag8d0jvm1IWZywscRBuvdSEvlGuhvVg5Qj97vhS5VFas06bgj/yXiuZ+yJ/WZWCYDYq8e5HZPITpoaHAvGckDPBplyUtn8zZ3UI4f5E1uLmxlehAkzVK33Fp8/SEZX4v8OLLT3MP/FWhDvS43u2sLvZcCstjVjbarImuLiSA0IW7UmNgG7u8x99JExO0pp0EAGJ3PiBOzyZ/PhxUPBXvOgxhwNzx0nzZzp+aSY8yhsWxFWRl6UWzmS6J/ieUS1q5Tjwq9gs4qcX6+Q9WWRpvYVboY+f4d6smQyryKdB5Hi5E8/jWGPoD9tFJDN4KVnnESrKi7fVjH6A3twUaQEw==","input":"AwAAAMI1CN4U9DnKW3soxArLClszrtTa/MGicksQVWpir/QNW/hp3N50wmjr1CUHvGP6u6WnrdK7oRDtSHgjcjmUVyr8NQtA06gcVk9m3KPdmWele0Bx9AcLpToixRb2FCx/JQ=="}';
   console.log("Test #7/1 - Groth16 Verify - SIMULATED ERROR");  
-  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(alice,({ dispatchError,dispatchInfo,status, events }) => {
+  const unsubg = await api.tx.zeropool.testGroth16Verify(proofinput).signAndSend(keyring,({ dispatchError,dispatchInfo,status, events }) => {
       if (dispatchError) {      // check for immediate verification success
         if (dispatchError.isModule) {
           // for module errors, we have the section indexed, lookup
@@ -164,6 +189,12 @@ async function testFailedGroth16Verify(alice) {
         process.exit(1);
       }
   });
+}
+
+// callback function to receive result
+function receiveresult(result,msg){
+  console.log("Test #10/1 " +result+" "+msg);
+  return;
 }
 
 
