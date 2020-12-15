@@ -28,11 +28,9 @@ rand =  { default-features = false, version = '0.7.3'}
 sp-runtime = { default-features = false, version = '2.0.0' }
 alt_serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, git = "https://github.com/Xanewok/json", branch = "no-std", features = ["alloc"] }
-ff-uint = {version="0.1.3", git="https://github.com/zeropoolnetwork/fawkes-crypto.git",branch = "feature/no-std", optional = false, default-features = false }
-ff-uint_derive = { version = "0.1.4", git="https://github.com/zeropoolnetwork/fawkes-crypto.git",optional=false,default-features=false,branch = "feature/no-std" }
-borsh = { git = "https://github.com/zeropoolnetwork/borsh.git", rev = "62e6da830c4dab6ea0f876ad88e0ef6f777e25a6", optional = true, default-features = false }
-## attention: the following version does not work
-##borsh = { git = "https://github.com/zeropoolnetwork/borsh.git", optional = true, default-features = false,branch = "feature/no-std" }
+ff-uint = {version="0.1.3", git="https://github.com/zeropoolnetwork/fawkes-crypto.git",branch = "feature/no-std", optional = false, default-features = false, features=["borsh_support"] }
+ff-uint_derive = { version = "0.1.4", git="https://github.com/zeropoolnetwork/fawkes-crypto.git",optional=false,default-features=false,branch = "feature/no-std", features=["borsh_support"] }
+borsh = { git = "https://github.com/zeropoolnetwork/borsh.git", rev = "62e6da830c4dab6ea0f876ad88e0ef6f777e25a6", default-features = false }
 
 [dependencies.bn]
 package = "zeropool-bn"
@@ -47,13 +45,14 @@ pretty_assertions = "0.4.0"
 
 
 [features]
-default = ["std"]
-borsh_support = ["borsh", "ff-uint/borsh_support","ff-uint_derive/borsh_support"]
+default = ["std", "borsh_support"]
+borsh_support = []
 std = [
     "codec/std",
     "frame-support/std",
     "frame-system/std",
-    #"borsh_support",
+    "ff-uint/std",
+    "borsh/std"
 ]
 
 

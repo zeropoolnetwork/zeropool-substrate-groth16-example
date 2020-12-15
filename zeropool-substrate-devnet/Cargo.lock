@@ -1425,6 +1425,7 @@ dependencies = [
  "ref-cast",
  "rustc-hex",
  "seedbox",
+ "serde",
  "static_assertions",
 ]
 

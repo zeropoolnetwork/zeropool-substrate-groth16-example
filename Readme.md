@@ -14,6 +14,11 @@ cd zeropool-substrate-devnet
 make init
 make run
 ```
+### Pallet Unit Test
+```bash
+cd zeropool-substrate-devnet/pallets/zeropool-substrate
+cargo +nightly-2020-10-05 test --release
+```
 
 ## Zeropool/Substrate Nodejs Client
 zeropool-substrate-nodejs-client contains a testing unit interacting with the Zeropool/Substrate node.
