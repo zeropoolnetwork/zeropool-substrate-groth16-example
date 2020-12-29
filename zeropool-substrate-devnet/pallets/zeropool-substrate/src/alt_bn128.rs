@@ -1,17 +1,17 @@
 extern crate alloc;
+use alloc::format;
 use bn::arith::U256;
 use bn::{pairing_batch, AffineG1, AffineG2, Fq, Fq2, Fr, Group, GroupError, Gt, G1, G2};
-use borsh::{BorshDeserialize, BorshSerialize};
-use alloc::format;
 use borsh::maybestd::string::String;
 use borsh::maybestd::vec::Vec;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AltBn128Error {
     /// Deserialization error for alt_bn128 functions
-    AltBn128DeserializationError  { msg: String },
+    AltBn128DeserializationError { msg: String },
     /// Serialization error for alt_bn128 functions
-    AltBn128SerializationError  { msg: String },
+    AltBn128SerializationError { msg: String },
 }
 
 const POINT_IS_NOT_ON_THE_CURVE: &str = "point is not on the curve";
@@ -52,7 +52,7 @@ pub fn alt_bn128_g1_multiexp_sublinear_complexity_estimate(n_bytes: u64, discoun
     const A: u64 = 85158;
     const B: u64 = 15119;
     const C: u64 = 682573;
-    const MULTIEXP_ITEM_SIZE: u64 = sp_std::mem::size_of::<(G1, Fr)>() as u64;  
+    const MULTIEXP_ITEM_SIZE: u64 = sp_std::mem::size_of::<(G1, Fr)>() as u64;
 
     // A+C*n/(log2(n)+4) - B*n - discount
 
@@ -90,10 +90,11 @@ struct WrapG1(pub G1);
 #[derive(Copy, Clone)]
 struct WrapG2(pub G2);
 
-
-
 impl BorshSerialize for WrapU256 {
-    fn serialize<W:  borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         self.0 .0.serialize(writer)
     }
 }
@@ -106,7 +107,10 @@ impl BorshDeserialize for WrapU256 {
 }
 
 impl BorshSerialize for WrapFr {
-    fn serialize<W: borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         WrapU256(self.0.into_u256()).serialize(writer)
     }
 }
@@ -115,13 +119,21 @@ impl BorshDeserialize for WrapFr {
     fn deserialize(buf: &mut &[u8]) -> core::result::Result<Self, borsh::maybestd::io::Error> {
         let num = WrapU256::deserialize(buf)?.0;
         Fr::new(num)
-            .ok_or_else(|| borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, NOT_IN_FIELD))
+            .ok_or_else(|| {
+                borsh::maybestd::io::Error::new(
+                    borsh::maybestd::io::ErrorKind::InvalidData,
+                    NOT_IN_FIELD,
+                )
+            })
             .map(|r| WrapFr(r))
     }
 }
 
 impl BorshSerialize for WrapFq {
-    fn serialize<W: borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         WrapU256(self.0.into_u256()).serialize(writer)
     }
 }
@@ -130,13 +142,21 @@ impl BorshDeserialize for WrapFq {
     fn deserialize(buf: &mut &[u8]) -> core::result::Result<Self, borsh::maybestd::io::Error> {
         let num = WrapU256::deserialize(buf)?.0;
         Fq::from_u256(num)
-            .map_err(|_| borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, NOT_IN_FIELD))
+            .map_err(|_| {
+                borsh::maybestd::io::Error::new(
+                    borsh::maybestd::io::ErrorKind::InvalidData,
+                    NOT_IN_FIELD,
+                )
+            })
             .map(|r| WrapFq(r))
     }
 }
 
 impl BorshSerialize for WrapFq2 {
-    fn serialize<W: borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         WrapFq(self.0.real()).serialize(writer)?;
         WrapFq(self.0.imaginary()).serialize(writer)
     }
@@ -152,7 +172,10 @@ impl BorshDeserialize for WrapFq2 {
 }
 
 impl BorshSerialize for WrapG1 {
-    fn serialize<W: borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         match AffineG1::from_jacobian(self.0) {
             Some(p) => {
                 WrapFq(p.x()).serialize(writer)?;
@@ -167,7 +190,6 @@ impl BorshSerialize for WrapG1 {
     }
 }
 
-
 impl BorshDeserialize for WrapG1 {
     fn deserialize(buf: &mut &[u8]) -> core::result::Result<Self, borsh::maybestd::io::Error> {
         let x = WrapFq::deserialize(buf)?.0;
@@ -177,12 +199,14 @@ impl BorshDeserialize for WrapG1 {
         } else {
             AffineG1::new(x, y)
                 .map_err(|e| match e {
-                    GroupError::NotOnCurve => {
-                        borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, POINT_IS_NOT_ON_THE_CURVE)
-                    }
-                    GroupError::NotInSubgroup => {
-                        borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, POINT_IS_NOT_IN_THE_SUBGROUP)
-                    }
+                    GroupError::NotOnCurve => borsh::maybestd::io::Error::new(
+                        borsh::maybestd::io::ErrorKind::InvalidData,
+                        POINT_IS_NOT_ON_THE_CURVE,
+                    ),
+                    GroupError::NotInSubgroup => borsh::maybestd::io::Error::new(
+                        borsh::maybestd::io::ErrorKind::InvalidData,
+                        POINT_IS_NOT_IN_THE_SUBGROUP,
+                    ),
                 })
                 .map(|p| WrapG1(p.into()))
         }
@@ -190,7 +214,10 @@ impl BorshDeserialize for WrapG1 {
 }
 
 impl BorshSerialize for WrapG2 {
-    fn serialize<W: borsh::maybestd::io::Write>(&self, writer: &mut W) -> core::result::Result<(), borsh::maybestd::io::Error> {
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> core::result::Result<(), borsh::maybestd::io::Error> {
         match AffineG2::from_jacobian(self.0) {
             Some(p) => {
                 WrapFq2(p.x()).serialize(writer)?;
@@ -214,12 +241,14 @@ impl BorshDeserialize for WrapG2 {
         } else {
             AffineG2::new(x, y)
                 .map_err(|e| match e {
-                    GroupError::NotOnCurve => {
-                        borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, POINT_IS_NOT_ON_THE_CURVE)
-                    }
-                    GroupError::NotInSubgroup => {
-                        borsh::maybestd::io::Error::new(borsh::maybestd::io::ErrorKind::InvalidData, POINT_IS_NOT_IN_THE_SUBGROUP)
-                    }
+                    GroupError::NotOnCurve => borsh::maybestd::io::Error::new(
+                        borsh::maybestd::io::ErrorKind::InvalidData,
+                        POINT_IS_NOT_ON_THE_CURVE,
+                    ),
+                    GroupError::NotInSubgroup => borsh::maybestd::io::Error::new(
+                        borsh::maybestd::io::ErrorKind::InvalidData,
+                        POINT_IS_NOT_IN_THE_SUBGROUP,
+                    ),
                 })
                 .map(|p| WrapG2(p.into()))
         }
@@ -261,11 +290,17 @@ impl BorshDeserialize for WrapG2 {
 /// ```
 pub fn alt_bn128_g1_multiexp(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn128Error> {
     let items = <Vec<(WrapG1, WrapFr)>>::try_from_slice(data)
-        .map_err(|e| AltBn128Error::AltBn128DeserializationError { msg: format!("{}", e) })?
+        .map_err(|e| AltBn128Error::AltBn128DeserializationError {
+            msg: format!("{}", e),
+        })?
         .into_iter()
         .map(|e| (e.0 .0, e.1 .0))
         .collect::<Vec<_>>();
-    let result = WrapG1(G1::multiexp(&items)).try_to_vec().map_err(|e| AltBn128Error::AltBn128SerializationError { msg: format!("{}", e) })?;
+    let result = WrapG1(G1::multiexp(&items)).try_to_vec().map_err(|e| {
+        AltBn128Error::AltBn128SerializationError {
+            msg: format!("{}", e),
+        }
+    })?;
     Ok(result)
 }
 /// Computes sum for signed g1 group elements on alt_bn128 curve
@@ -302,7 +337,9 @@ pub fn alt_bn128_g1_multiexp(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn
 /// ```
 pub fn alt_bn128_g1_sum(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn128Error> {
     let items = <Vec<(bool, WrapG1)>>::try_from_slice(data)
-        .map_err(|e| AltBn128Error::AltBn128DeserializationError { msg: format!("{}", e) })?
+        .map_err(|e| AltBn128Error::AltBn128DeserializationError {
+            msg: format!("{}", e),
+        })?
         .into_iter()
         .map(|e| (e.0, e.1 .0))
         .collect::<Vec<_>>();
@@ -315,7 +352,12 @@ pub fn alt_bn128_g1_sum(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn128Er
             acc = acc + e;
         }
     }
-    let result = WrapG1(acc).try_to_vec().map_err(|e| AltBn128Error::AltBn128SerializationError { msg: format!("{}", e) })?;
+    let result =
+        WrapG1(acc)
+            .try_to_vec()
+            .map_err(|e| AltBn128Error::AltBn128SerializationError {
+                msg: format!("{}", e),
+            })?;
     Ok(result)
 }
 
@@ -354,7 +396,9 @@ pub fn alt_bn128_g1_sum(data: &[u8]) -> core::result::Result<Vec<u8>, AltBn128Er
 /// ```
 pub fn alt_bn128_pairing_check(data: &[u8]) -> core::result::Result<bool, AltBn128Error> {
     let items = <Vec<(WrapG1, WrapG2)>>::try_from_slice(data)
-        .map_err(|e| AltBn128Error::AltBn128DeserializationError { msg: format!("{}", e) })?
+        .map_err(|e| AltBn128Error::AltBn128DeserializationError {
+            msg: format!("{}", e),
+        })?
         .into_iter()
         .map(|e| (e.0 .0, e.1 .0))
         .collect::<Vec<_>>();
