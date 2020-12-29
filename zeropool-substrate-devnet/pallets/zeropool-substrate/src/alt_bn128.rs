@@ -125,7 +125,7 @@ impl BorshDeserialize for WrapFr {
                     NOT_IN_FIELD,
                 )
             })
-            .map(|r| WrapFr(r))
+            .map(WrapFr)
     }
 }
 
@@ -148,7 +148,7 @@ impl BorshDeserialize for WrapFq {
                     NOT_IN_FIELD,
                 )
             })
-            .map(|r| WrapFq(r))
+            .map(WrapFq)
     }
 }
 
