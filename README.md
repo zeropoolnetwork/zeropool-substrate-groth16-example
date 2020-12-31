@@ -8,7 +8,7 @@ zeropool-substrate-devnet folder contains a working single node development netw
 
 This is proof of concept of verifier of zkSNARKs on PolkaDot blockchain. `groth16verify` is implemented and could be tested via `test_groth16verify` external pallet method.
 
-Test vectors could be obtained from [fawkes-crypto](https://github.com/zeropoolnetwork/fawkes-crypto/blob/master/fawkes-crypto/src/backend/bellman_groth16/mod.rs#L204) or other zkSNAK frameworks.
+Test vectors could be obtained from [fawkes-crypto](https://github.com/zeropoolnetwork/fawkes-crypto/blob/master/fawkes-crypto/src/backend/bellman_groth16/mod.rs#L204) or other zkSNARK frameworks.
 
 ### Requirements
 Install Rust compiler: https://www.rust-lang.org
