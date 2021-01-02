@@ -124,10 +124,6 @@ describe('ZeroPool', () => {
         const randomData = Array(99).fill().map(() => Math.round(Math.random() * 255));
 
         const unsub = await api.tx.zeropool.testGroth16Verify(randomData).signAndSend(alice, ({ events }) => {
-          for (let { phase, event: { data, method, section } } of events) {
-            console.log(`Event: ${phase}: ${section}.${method}:: ${data}`);
-          }
-
           const event = events.find(({ event: { method }}) => method == 'VerificationFailed');
 
           if (event) {
