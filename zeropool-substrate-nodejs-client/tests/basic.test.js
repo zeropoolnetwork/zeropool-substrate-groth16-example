@@ -17,12 +17,6 @@ function initAccount() {
   return alice;
 }
 
-function logEvents(events) {
-  for (let { phase, event: { data, method, section } } of events) {
-    console.log(`Event: ${phase}: ${section}.${method}:: ${data}`);
-  }
-}
-
 describe('ZeroPool', () => {
   let wsProvider;
   let api;
@@ -34,19 +28,16 @@ describe('ZeroPool', () => {
 
   test('get genesis hash', () => {
     expect(api.genesisHash).toBeTruthy();
-    console.log('Genesis hash:', api.genesisHash.toHex());
   });
 
   test('get balance', async () => {
     const { nonce, data: balance } = await api.query.system.account(ADDR);
     expect(balance).toBeTruthy();
-    console.log(`Balance of ${balance.free} and a nonce of ${nonce}`);
   });
 
   test('get last block mined', async () => {
     const lastHeader = await api.rpc.chain.getHeader();
     expect(lastHeader.hash).toBeTruthy();
-    console.log(`Last block #${lastHeader.number} has hash ${lastHeader.hash}`);
   });
 
   describe('setVk', () => {
@@ -54,7 +45,6 @@ describe('ZeroPool', () => {
       const alice = initAccount();
       await new Promise(async resolve => {
         const unsub = await api.tx.zeropool.setVk(VK).signAndSend(alice, ({ events }) => {
-          logEvents(events);
           const event = events.find(({ event: { method }}) => method == 'VerificationKeyUpdated');
 
           if (event) {
@@ -69,7 +59,6 @@ describe('ZeroPool', () => {
       const alice = initAccount();
       await new Promise(async resolve => {
         const unsub = await api.tx.zeropool.setVk(INVALID_VK).signAndSend(alice, ({ events }) => {
-          logEvents(events);
           const event = events.find(({ event: { method }}) => method == 'ExtrinsicFailed');
 
           if (event) {
@@ -87,7 +76,6 @@ describe('ZeroPool', () => {
       const alice = initAccount();
       await new Promise(async resolve => {
         const unsub = await api.tx.zeropool.setVk(VK).signAndSend(alice, ({ events }) => {
-          logEvents(events);
           const event = events.find(({ event: { method }}) => method == 'VerificationKeyUpdated');
 
           if (event) {
@@ -104,7 +92,6 @@ describe('ZeroPool', () => {
       await new Promise(async resolve => {
         // groth16 verification passing proof and input (verification key is stored)
         const unsub = await api.tx.zeropool.testGroth16Verify(PROOF_INPUT).signAndSend(alice, ({ events }) => {
-          logEvents(events);
           const event = events.find(({ event: { method }}) => method == 'VerificationSuccessful');
 
           if (event) {
@@ -121,7 +108,6 @@ describe('ZeroPool', () => {
       await new Promise(async resolve => {
         // groth16 verification passing proof and input (verification key is stored)
         const unsub = await api.tx.zeropool.testGroth16Verify(INVALID_PROOF_INPUT).signAndSend(alice, ({ events }) => {
-          logEvents(events);
           const event = events.find(({ event: { method }}) => method == 'VerificationFailed');
 
           if (event) {

@@ -3,10 +3,10 @@
     "@polkadot/api": "^2.9.1"
   },
   "scripts": {
-    "test": "jest ./tests"
+    "test": "jest --silent --verbose ./tests"
   },
   "jest": {
-    "testTimeout": 10000
+    "testTimeout": 30000
   },
   "devDependencies": {
     "jest": "^26.6.3"
