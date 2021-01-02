@@ -41,7 +41,7 @@ describe('ZeroPool', () => {
   });
 
   describe('setVk', () => {
-    it('succeeds when provided with valid VK', async () => {
+    it('succeeds with valid VK', async () => {
       const alice = initAccount();
       await new Promise(async resolve => {
         const unsub = await api.tx.zeropool.setVk(VK).signAndSend(alice, ({ events }) => {
@@ -55,7 +55,7 @@ describe('ZeroPool', () => {
       });
     });
 
-    it('fails when provided with invalid VK', async () => {
+    it('fails with invalid VK', async () => {
       const alice = initAccount();
       await new Promise(async resolve => {
         const unsub = await api.tx.zeropool.setVk(INVALID_VK).signAndSend(alice, ({ events }) => {
@@ -86,7 +86,7 @@ describe('ZeroPool', () => {
       });
     });
 
-    it('succeeds with valid input', async () => {
+    it('succeeds with valid proof', async () => {
       const alice = initAccount();
 
       await new Promise(async resolve => {
@@ -102,12 +102,32 @@ describe('ZeroPool', () => {
       });
     });
 
-    it('fails with invalid input', async () => {
+    it('fails with invalid proof', async () => {
       const alice = initAccount();
 
       await new Promise(async resolve => {
-        // groth16 verification passing proof and input (verification key is stored)
         const unsub = await api.tx.zeropool.testGroth16Verify(INVALID_PROOF_INPUT).signAndSend(alice, ({ events }) => {
+          const event = events.find(({ event: { method }}) => method == 'VerificationFailed');
+
+          if (event) {
+            unsub();
+            resolve();
+          }
+        });
+      });
+    });
+
+    it('fails with bad input', async () => {
+      const alice = initAccount();
+
+      await new Promise(async resolve => {
+        const randomData = Array(99).fill().map(() => Math.round(Math.random() * 255));
+
+        const unsub = await api.tx.zeropool.testGroth16Verify(randomData).signAndSend(alice, ({ events }) => {
+          for (let { phase, event: { data, method, section } } of events) {
+            console.log(`Event: ${phase}: ${section}.${method}:: ${data}`);
+          }
+
           const event = events.find(({ event: { method }}) => method == 'VerificationFailed');
 
           if (event) {

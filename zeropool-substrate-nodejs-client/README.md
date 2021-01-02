@@ -15,6 +15,10 @@ yarn add @polkadot/api
 ```
 
 ## Usage
+Run integration tests:
+```bash
+npm test
+```
 
 You can start the client to connect to a locally running node
 
