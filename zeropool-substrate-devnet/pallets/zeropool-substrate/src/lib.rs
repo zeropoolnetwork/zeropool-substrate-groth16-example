@@ -201,7 +201,23 @@ decl_module! {
 
     }
 }
-// function for groth16 verification
+
+
+/// Computes Groth16 verify on alt_bn128 curve.
+/// # Arguments
+///
+/// * `vkd` - verification key, struct of (alpha: G1, beta:G2, gamma:G2, delta:G2, ic:[G1])
+/// * `proofd` - proof, struct of (a:G1, b:G2, c:G1)
+/// * `inputd` - vector of imputs [Fr]
+/// 
+/// # Data types
+/// G2 is Fr-ordered subgroup point (x:Fq2, y:Fq2) on alt_bn128 twist,
+/// alt_bn128 twist is Y^2 = X^3 + 3/(i+9) curve over Fq2
+/// Fq2 is complex field element (re: Fq, im: Fq)
+/// G1 is point (x:Fq, y:Fq) on alt_bn128,
+/// alt_bn128 is Y^2 = X^3 + 3 curve over Fq
+/// Fq is LE-serialized u256 number lesser than 21888242871839275222246405745257275088696311157297823662689037894645226208583
+/// Fr is LE-serialized u256 number lesser than 21888242871839275222246405745257275088548364400416034343698204186575808495617
 fn groth16verify(vkd: VK, proofd: Proof, inputd: VU256) -> bool {
     // make verification
     let neg_a = alt_bn128_g1_neg(proofd.a);
